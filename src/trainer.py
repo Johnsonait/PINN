@@ -43,22 +43,21 @@ class Trainer():
                 print(f'Reached early stopping criteria at epoch: {epoch}')
                 return
             
-
         return
 
-    def fit_epoch(self) -> tuple(float,float):
+    def fit_epoch(self) -> tuple[float,float]:
         # The PINN model should have configured the dataloaders into batches that
         # conform  to their expected forward() method.
-        training_loader,validation_loader: tuple(DataLoader,DataLoader) = self._model.configure_dataset(self._dataset)
+        training_loader,validation_loader = self._model.configure_dataset(self._dataset)
 
         train_loss = 0
         count = 0
         self._model.train()
-        for input_batch,target_batch in training_loader:
+        for input_batch,target_batch,len_batch in training_loader:
             count += 1
             pred = self._model(input_batch)
 
-            train_loss += self._loss_fcn(pred,target_batch)
+            train_loss += self._model.loss(input_batch,pred,target_batch,self._loss_fcn)
 
             self._optimizer.step()
 
@@ -69,7 +68,7 @@ class Trainer():
         count = 0
         self._model.eval()
         with torch.no_grad():
-            for input_batch,target_batch in validation_loader:
+            for input_batch,target_batch,len_batch in validation_loader:
                 count += 1
                 pred = self._model(input_batch)
 
